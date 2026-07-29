@@ -4,6 +4,7 @@ export const app = express();
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import ErrorHandler from './middleware/error';
+import UserRouter from './routes/user.route';
 
 //body parser middleware
 app.use(express.json({ limit: '50mb' }));
@@ -14,6 +15,9 @@ app.use(cors({
     origin: process.env.origin?.split(','),
     credentials: true,
 }));
+
+//user routes
+app.use('/api/v1/user', UserRouter);
 
 //testing api
 app.get('/', (req: Request, res: Response) => {

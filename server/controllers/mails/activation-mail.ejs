@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Activate Your Account</title>
+</head>
+
+<body style="font-family: Arial, sans-serif; background-color: #f7f7f7; padding: 24px;">
+    <div
+        style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+        <h2 style="color: #333333;">Welcome, <%= user.name %>!</h2>
+        <p style="color: #555555;">Thank you for registering with DevWeekends LMS.</p>
+        <p style="color: #555555;">Use the activation code below to verify your account:</p>
+
+        <div style="margin: 24px 0; padding: 16px; background: #f0f4ff; border-radius: 6px; text-align: center;">
+            <h1 style="margin: 0; letter-spacing: 4px; color: #1d4ed8;">
+                <%= activationCode %>
+            </h1>
+        </div>
+
+        <p style="color: #777777; font-size: 14px;">This code will expire in 5 minutes.</p>
+        <p style="color: #777777; font-size: 14px;">If you did not create this account, you can safely ignore this
+            email.</p>
+    </div>
+</body>
+
+</html>
