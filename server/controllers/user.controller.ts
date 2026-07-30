@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken';
 import sendEmail from '../utils/sendMail';
 import { IUser } from '../models/user.model';
 import { sendToken } from '../utils/jwt';
+import { redis } from '../utils/redis';
 
 interface IRegistrationBody {
     name: string;
@@ -135,6 +136,23 @@ export const loginUser = CatchAsyncErrors(async (req: Request, res: Response, ne
 
         sendToken(user, res, 200);
         
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+});
+//logout user
+export const logoutUser = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        res.clearCookie('accessToken');
+        res.clearCookie('refreshToken');
+
+        const userId = (req as any).user?._id || '';
+        await redis.del(`session:${userId}`);
+
+        res.status(200).json({
+            success: true,
+            message: 'Logged out successfully',
+        });
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 400));
     }
