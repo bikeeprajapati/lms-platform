@@ -22,7 +22,23 @@ export const isAuthenticated = CatchAsyncErrors(
       return next(new ErrorHandler("Please login to access this resource", 401));
     }
 
-    (req as any).user = { _id: decoded.id };
+    (req as any).user = JSON.parse(session);
     next();
   }
 );
+
+//validate user role
+export const authorizeRoles = (...roles: string[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const userRole = (req as any).user.role;
+    if (!roles.includes(userRole)) {
+      return next(
+        new ErrorHandler(
+          `Role (${userRole}) is not allowed to access this resource`,
+          403
+        )
+      );
+    }
+    next();
+  };
+};

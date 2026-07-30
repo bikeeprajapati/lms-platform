@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import User from '../models/user.model';
 import ErrorHandler from '../utils/ErrorHandler';
 import { CatchAsyncErrors } from '../middleware/catchAsyncErrors';
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 import sendEmail from '../utils/sendMail';
 import { IUser } from '../models/user.model';
 import { sendToken } from '../utils/jwt';
@@ -135,7 +135,7 @@ export const loginUser = CatchAsyncErrors(async (req: Request, res: Response, ne
         }
 
         sendToken(user, res, 200);
-        
+
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 400));
     }
@@ -152,6 +152,66 @@ export const logoutUser = CatchAsyncErrors(async (req: Request, res: Response, n
         res.status(200).json({
             success: true,
             message: 'Logged out successfully',
+        });
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+});
+
+//update access token
+export const updateAccessToken = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const refresh_token = req.cookies.refreshToken as string;
+
+        if (!refresh_token) {
+            return next(new ErrorHandler('Please login to access this resource', 401));
+        }
+
+        const decoded = jwt.verify(refresh_token, process.env.REFRESH_TOKEN || '') as JwtPayload;
+
+        if (!decoded) {
+            return next(new ErrorHandler('Could not refresh token', 400));
+        }
+
+        const session = await redis.get(`session:${decoded.id}`);
+
+        if (!session) {
+            return next(new ErrorHandler('Please login to access this resource', 401));
+        }
+
+        const user = JSON.parse(session);
+
+        const accessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN || '', {
+            expiresIn: '5m',
+        });
+
+        const refreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN || '', {
+            expiresIn: '3d',
+        });
+
+        (req as any).user = user;
+
+        res.cookie('accessToken', accessToken, {
+            maxAge: 5 * 60 * 1000, // 5 minutes
+            httpOnly: true,
+            sameSite: 'strict',
+            secure: process.env.NODE_ENV === 'production',
+        });
+
+        res.cookie('refreshToken', refreshToken, {
+            maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days
+            httpOnly: true,
+            sameSite: 'strict',
+            secure: process.env.NODE_ENV === 'production',
+        });
+
+        // refresh the Redis session expiry too (sliding session)
+        await redis.set(`session:${user._id}`, JSON.stringify(user), 'EX', 3 * 24 * 60 * 60);
+
+        res.status(200).json({
+            success: true,
+            accessToken,
+            refreshToken,
         });
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 400));
