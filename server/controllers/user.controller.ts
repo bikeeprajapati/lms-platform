@@ -6,6 +6,7 @@ import { CatchAsyncErrors } from '../middleware/catchAsyncErrors';
 import jwt from 'jsonwebtoken';
 import sendEmail from '../utils/sendMail';
 import { IUser } from '../models/user.model';
+import { sendToken } from '../utils/jwt';
 
 interface IRegistrationBody {
     name: string;
@@ -107,6 +108,33 @@ export const activateUser = CatchAsyncErrors(async (req: Request, res: Response,
             message: 'Account activated successfully',
             user,
         });
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+});
+
+//login user
+interface ILoginRequest {
+    email: string;
+    password: string;
+}
+
+export const loginUser = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { email, password }: ILoginRequest = req.body;
+
+        const user = await User.findOne({ email }).select('+password');
+        if (!user) {
+            return next(new ErrorHandler('Invalid email or password', 401));
+        }
+
+        const isPasswordMatched = await user.comparePassword(password);
+        if (!isPasswordMatched) {
+            return next(new ErrorHandler('Invalid email or password', 401));
+        }
+
+        sendToken(user, res, 200);
+        
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 400));
     }

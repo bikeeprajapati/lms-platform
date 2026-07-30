@@ -1,16 +1,16 @@
 import { Redis } from 'ioredis';
 require('dotenv').config();
 
-export const redisClient = new Redis(process.env.REDIS_URL || '', {
+export const redis = new Redis(process.env.REDIS_URL || '', {
     tls: {
         rejectUnauthorized: false,
     },
 });
 
-redisClient.on('connect', () => {
+redis.on('connect', () => {
     console.log('Connected to Redis');
 });
 
-redisClient.on('error', (err) => {
+redis.on('error', (err) => {
     console.error('Redis connection error:', err);
 });
