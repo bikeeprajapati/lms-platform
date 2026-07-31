@@ -99,6 +99,7 @@ export const activateUser = CatchAsyncErrors(async (req: Request, res: Response,
             name,
             email,
             password,
+            isVerified: true,
             avatar: avatar || {
                 public_id: 'default-avatar',
                 url: 'https://res.cloudinary.com/demo/image/upload/v1710000000/default-avatar.png',
@@ -224,6 +225,38 @@ export const getUserInfo = CatchAsyncErrors(async (req: Request, res: Response, 
     try {
         const userId = (req as any).user?._id;
         getUserById(userId, res);
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+});
+
+//social auth
+interface ISocialAuthBody {
+    email: string;
+    name: string;
+    avatar: string;
+}
+
+export const socialAuth = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { email, name, avatar }: ISocialAuthBody = req.body;
+
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            const newUser = await User.create({
+                email,
+                name,
+                avatar: {
+                    public_id: 'social-auth',
+                    url: avatar,
+                },
+                isVerified: true, // social accounts are pre-verified by the provider
+            });
+            sendToken(newUser, res, 200);
+        } else {
+            sendToken(user, res, 200);
+        }
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 400));
     }
