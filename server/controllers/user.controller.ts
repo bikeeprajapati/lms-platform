@@ -9,6 +9,7 @@ import { IUser } from '../models/user.model';
 import { sendToken } from '../utils/jwt';
 import { redis } from '../utils/redis';
 import { getUserById } from "../services/user.service";
+import cloudinary from '../utils/cloudinary';
 
 interface IRegistrationBody {
     name: string;
@@ -294,6 +295,94 @@ export const updateUserInfo = CatchAsyncErrors(async (req: Request, res: Respons
         await user.save();
 
         // refresh the Redis session so /me and future requests reflect the update
+        await redis.set(`session:${userId}`, JSON.stringify(user));
+
+        res.status(200).json({
+            success: true,
+            user,
+        });
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+});
+
+//update user password
+interface IUpdatePassword {
+    oldPassword: string;
+    newPassword: string;
+}
+
+export const updatePassword = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { oldPassword, newPassword }: IUpdatePassword = req.body;
+
+        if (!oldPassword || !newPassword) {
+            return next(new ErrorHandler('Please enter old and new password', 400));
+        }
+
+        const userId = (req as any).user?._id;
+        const user = await User.findById(userId).select('+password');
+
+        if (!user || !user.password) {
+            return next(new ErrorHandler('Invalid user or user has no password set (social login account)', 400));
+        }
+
+        const isPasswordMatched = await user.comparePassword(oldPassword);
+        if (!isPasswordMatched) {
+            return next(new ErrorHandler('Old password is incorrect', 400));
+        }
+
+        user.password = newPassword;
+        await user.save(); // triggers your pre('save') hook, which hashes it automatically
+
+        user.password = undefined as any;
+
+        await redis.set(`session:${userId}`, JSON.stringify(user));
+
+        res.status(200).json({
+            success: true,
+            message: 'Password updated successfully',
+            user,
+        });
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+});
+
+//update profile picture
+interface IUpdateProfilePicture {
+    avatar: string; // base64 image string
+}
+
+export const updateProfilePicture = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { avatar }: IUpdateProfilePicture = req.body;
+
+        const userId = (req as any).user?._id;
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return next(new ErrorHandler('User not found', 404));
+        }
+
+        if (avatar) {
+            // remove old image from Cloudinary first, if one exists (and isn't the default placeholder)
+            if (user.avatar?.public_id && user.avatar.public_id !== 'default-avatar') {
+                await cloudinary.uploader.destroy(user.avatar.public_id);
+            }
+
+            const myCloud = await cloudinary.uploader.upload(avatar, {
+                folder: 'avatars',
+                width: 150,
+            });
+
+            user.avatar = {
+                public_id: myCloud.public_id,
+                url: myCloud.secure_url,
+            };
+        }
+
+        await user.save();
         await redis.set(`session:${userId}`, JSON.stringify(user));
 
         res.status(200).json({
