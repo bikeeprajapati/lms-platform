@@ -8,6 +8,7 @@ import sendEmail from '../utils/sendMail';
 import { IUser } from '../models/user.model';
 import { sendToken } from '../utils/jwt';
 import { redis } from '../utils/redis';
+import { getUserById } from "../services/user.service";
 
 interface IRegistrationBody {
     name: string;
@@ -134,6 +135,7 @@ export const loginUser = CatchAsyncErrors(async (req: Request, res: Response, ne
             return next(new ErrorHandler('Invalid email or password', 401));
         }
 
+        user.password = undefined as any;
         sendToken(user, res, 200);
 
     } catch (error: any) {
@@ -213,6 +215,15 @@ export const updateAccessToken = CatchAsyncErrors(async (req: Request, res: Resp
             accessToken,
             refreshToken,
         });
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+});
+//get user info
+export const getUserInfo = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = (req as any).user?._id;
+        getUserById(userId, res);
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 400));
     }
