@@ -48,13 +48,17 @@ export const editCourse = CatchAsyncErrors(async (req: Request, res: Response, n
             };
         }
 
-        const courseId = req.params.id;
+        const courseId = req.params.id as string;
 
         const course = await CourseModel.findByIdAndUpdate(
             courseId,
             { $set: data },
             { new: true }
         );
+
+        // invalidate stale cache entries after an edit
+        await redis.del(courseId);
+        await redis.del('allCourses');
 
         res.status(201).json({
             success: true,
