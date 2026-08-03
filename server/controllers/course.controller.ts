@@ -7,6 +7,8 @@ import CourseModel from '../models/course.model';
 import { redis } from '../utils/redis';
 import { createCourse } from '../services/course.service';
 import mongoose from "mongoose";
+import NotificationModel from "../models/notification.model";
+import sendMail from "../utils/sendMail";
 
 // ------------------- Create Course (admin only) -------------------
 export const uploadCourse = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
@@ -255,10 +257,34 @@ export const addAnswer = CatchAsyncErrors(async (req: Request, res: Response, ne
         await course?.save();
 
         if ((req as any).user?._id === (question.user as any)._id) {
-            // the original asker replied to their own question - no notification needed
+            // no notification needed
         } else {
-            // TODO: notify the original asker that their question was answered
-            // (e.g. email via sendMail, or an in-app notification via NotificationModel + Socket.io)
+            const data = {
+                name: (question.user as any).name,
+                title: courseContent.title,
+            };
+
+            try {
+                await NotificationModel.create({
+                    userId: (question.user as any)._id,
+                    title: "New Question Reply Received",
+                    message: `You have a new reply to your question in "${courseContent.title}"`,
+                });
+
+                await sendMail({
+                    email: (question.user as any).email,
+                    subject: "You have a new reply to your question",
+                    template: "question-reply",
+                    data: [
+                        { key: "name", value: (question.user as any).name },
+                        { key: "title", value: courseContent.title },
+                        { key: "loginUrl", value: `${process.env.ORIGIN || 'http://localhost:3000'}/login` },
+                    ],
+                });
+            } catch (error: any) {
+                console.error("Notification/email failed:", error.message);
+                // don't fail the whole request just because notification delivery failed
+            }
         }
 
         res.status(200).json({
