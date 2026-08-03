@@ -209,3 +209,63 @@ export const addQuestion = CatchAsyncErrors(async (req: Request, res: Response, 
         return next(new ErrorHandler(error.message, 500));
     }
 });
+
+// ------------------- Add Answer to a Question -------------------
+interface IAddAnswerData {
+    answer: string;
+    courseId: string;
+    contentId: string;
+    questionId: string;
+}
+
+export const addAnswer = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { answer, courseId, contentId, questionId }: IAddAnswerData = req.body;
+
+        const course = await CourseModel.findById(courseId);
+
+        if (!mongoose.Types.ObjectId.isValid(contentId)) {
+            return next(new ErrorHandler('Invalid content id', 400));
+        }
+
+        const courseContent = course?.courseData?.find((item: any) =>
+            item._id.equals(contentId)
+        );
+
+        if (!courseContent) {
+            return next(new ErrorHandler('Invalid content id', 400));
+        }
+
+        const question = courseContent?.questions?.find((item: any) =>
+            item._id.equals(questionId)
+        );
+
+        if (!question) {
+            return next(new ErrorHandler('Invalid question id', 400));
+        }
+
+        // build the answer/reply object
+        const newAnswer: any = {
+            user: (req as any).user,
+            answer,
+        };
+
+        question.questionReplies?.push(newAnswer);
+
+        await course?.save();
+
+        if ((req as any).user?._id === (question.user as any)._id) {
+            // the original asker replied to their own question - no notification needed
+        } else {
+            // TODO: notify the original asker that their question was answered
+            // (e.g. email via sendMail, or an in-app notification via NotificationModel + Socket.io)
+        }
+
+        res.status(200).json({
+            success: true,
+            course,
+        });
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
