@@ -6,6 +6,7 @@ import cloudinary from '../utils/cloudinary';
 import CourseModel from '../models/course.model';
 import { redis } from '../utils/redis';
 import { createCourse } from '../services/course.service';
+import mongoose from "mongoose";
 
 // ------------------- Create Course (admin only) -------------------
 export const uploadCourse = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
@@ -156,6 +157,53 @@ export const getCourseByUser = CatchAsyncErrors(async (req: Request, res: Respon
         res.status(200).json({
             success: true,
             content,
+        });
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
+
+// ------------------- Add Question to Course -------------------
+interface IAddQuestionData {
+    question: string;
+    courseId: string;
+    contentId: string;
+}
+
+export const addQuestion = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { question, courseId, contentId }: IAddQuestionData = req.body;
+
+        const course = await CourseModel.findById(courseId);
+
+        if (!mongoose.Types.ObjectId.isValid(contentId)) {
+            return next(new ErrorHandler('Invalid content id', 400));
+        }
+
+        const courseContent = course?.courseData?.find((item: any) =>
+            item._id.equals(contentId)
+        );
+
+        if (!courseContent) {
+            return next(new ErrorHandler('Invalid content id', 400));
+        }
+
+        // create the new question object
+        const newQuestion: any = {
+            user: (req as any).user,
+            question,
+            questionReplies: [],
+        };
+
+        // push it into the specific lecture's questions array
+        courseContent.questions.push(newQuestion);
+
+        // save the updated course
+        await course?.save();
+
+        res.status(200).json({
+            success: true,
+            course,
         });
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 500));
