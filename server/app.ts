@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import ErrorHandler from './middleware/error';
 import UserRouter from './routes/user.route';
 import CourseRouter from "./routes/course.route";
+import OrderRouter from "./routes/order.route";
 //body parser middleware
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -21,6 +22,9 @@ app.use('/api/v1/user', UserRouter);
 
 //course routes
 app.use('/api/v1/course', CourseRouter);
+
+//order routes
+app.use('/api/v1/order', OrderRouter);
 
 //testing api
 app.get('/', (req: Request, res: Response) => {
