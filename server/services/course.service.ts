@@ -1,5 +1,6 @@
 import { Response } from "express";
 import CourseModel from "../models/course.model";
+import { redis } from "../utils/redis";
 
 // create a course and send the response (used by uploadCourse controller)
 export const createCourse = async (data: any, res: Response) => {
@@ -18,4 +19,19 @@ export const getAllCoursesService = async (res: Response) => {
         success: true,
         courses,
     });
+};
+
+// delete a course by id, and clean up its Redis cache
+export const deleteCourseService = async (id: string) => {
+    const course = await CourseModel.findById(id);
+
+    if (!course) {
+        return null;
+    }
+
+    await course.deleteOne({ _id: id });
+    await redis.del(id);
+    await redis.del('allCourses');
+
+    return course;
 };

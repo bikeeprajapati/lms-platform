@@ -5,7 +5,7 @@ import { CatchAsyncErrors } from '../middleware/catchAsyncErrors';
 import cloudinary from '../utils/cloudinary';
 import CourseModel from '../models/course.model';
 import { redis } from '../utils/redis';
-import { createCourse } from '../services/course.service';
+import { createCourse,deleteCourseService } from '../services/course.service';
 import mongoose from "mongoose";
 import NotificationModel from "../models/notification.model";
 import sendMail from "../utils/sendMail";
@@ -408,6 +408,27 @@ export const addReplyToReview = CatchAsyncErrors(async (req: Request, res: Respo
         res.status(200).json({
             success: true,
             course,
+        });
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
+
+
+// ------------------- Delete Course (admin only) -------------------
+export const deleteCourse = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params;
+
+        const course = await deleteCourseService(id as string);
+
+        if (!course) {
+            return next(new ErrorHandler('Course not found', 404));
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Course deleted successfully',
         });
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 500));
