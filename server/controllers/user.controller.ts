@@ -8,7 +8,7 @@ import sendEmail from '../utils/sendMail';
 import { IUser } from '../models/user.model';
 import { sendToken } from '../utils/jwt';
 import { redis } from '../utils/redis';
-import { getAllUsersService, updateUserRoleService,getUserById } from "../services/user.service";
+import { getAllUsersService, deleteUserService, updateUserRoleService, getUserById } from "../services/user.service";
 import cloudinary from '../utils/cloudinary';
 
 interface IRegistrationBody {
@@ -432,5 +432,27 @@ export const updateUserRole = CatchAsyncErrors(async (req: Request, res: Respons
         });
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 400));
+    }
+});
+
+
+
+// ------------------- Delete User (admin only) -------------------
+export const deleteUser = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params;
+
+        const user = await deleteUserService(id as string);
+
+        if (!user) {
+            return next(new ErrorHandler('User not found', 404));
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'User deleted successfully',
+        });
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
     }
 });

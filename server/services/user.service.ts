@@ -58,3 +58,17 @@ export const updateUserRoleService = async (email: string, role: string) => {
 
     return user;
 };
+
+// delete a user by id, and clean up their Redis session
+export const deleteUserService = async (id: string) => {
+    const user = await User.findById(id);
+
+    if (!user) {
+        return null;
+    }
+
+    await user.deleteOne({ _id: id });
+    await redis.del(`session:${id}`);
+
+    return user;
+};
