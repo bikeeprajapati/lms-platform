@@ -408,3 +408,40 @@ export const getAllUsers = CatchAsyncErrors(async (req: Request, res: Response, 
         return next(new ErrorHandler(error.message, 500));
     }
 });
+
+
+// ------------------- Update User Role (admin only) -------------------
+interface IUpdateUserRole {
+    email: string;
+    role: string;
+}
+
+export const updateUserRole = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { email, role }: IUpdateUserRole = req.body;
+
+        const isUserExist = await User.findOne({ email });
+
+        if (!isUserExist) {
+            return next(new ErrorHandler('User not found', 400));
+        }
+
+        const user = await User.findByIdAndUpdate(
+            isUserExist._id,
+            { role },
+            { new: true }
+        );
+
+        // refresh Redis session so the role change takes effect immediately
+        if (user) {
+            await redis.set(`session:${user._id}`, JSON.stringify(user));
+        }
+
+        res.status(201).json({
+            success: true,
+            user,
+        });
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+});
