@@ -8,7 +8,7 @@ import sendEmail from '../utils/sendMail';
 import { IUser } from '../models/user.model';
 import { sendToken } from '../utils/jwt';
 import { redis } from '../utils/redis';
-import { getUserById } from "../services/user.service";
+import { getAllUsersService, getUserById } from "../services/user.service";
 import cloudinary from '../utils/cloudinary';
 
 interface IRegistrationBody {
@@ -391,5 +391,20 @@ export const updateProfilePicture = CatchAsyncErrors(async (req: Request, res: R
         });
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 400));
+    }
+});
+
+
+// ------------------- Get All Users (admin only) -------------------
+export const getAllUsers = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const users = await getAllUsersService();
+
+        res.status(200).json({
+            success: true,
+            users,
+        });
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
     }
 });
