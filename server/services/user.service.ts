@@ -37,3 +37,24 @@ export const getAllUsersService = async () => {
     const users = await User.find().sort({ createdAt: -1 });
     return users;
 };
+
+// update a user's role by email, refresh their Redis session, and return the updated user
+export const updateUserRoleService = async (email: string, role: string) => {
+    const isUserExist = await User.findOne({ email });
+
+    if (!isUserExist) {
+        return null;
+    }
+
+    const user = await User.findByIdAndUpdate(
+        isUserExist._id,
+        { role },
+        { new: true }
+    );
+
+    if (user) {
+        await redis.set(`session:${user._id}`, JSON.stringify(user));
+    }
+
+    return user;
+};

@@ -8,7 +8,7 @@ import sendEmail from '../utils/sendMail';
 import { IUser } from '../models/user.model';
 import { sendToken } from '../utils/jwt';
 import { redis } from '../utils/redis';
-import { getAllUsersService, getUserById } from "../services/user.service";
+import { getAllUsersService, updateUserRoleService,getUserById } from "../services/user.service";
 import cloudinary from '../utils/cloudinary';
 
 interface IRegistrationBody {
@@ -410,7 +410,7 @@ export const getAllUsers = CatchAsyncErrors(async (req: Request, res: Response, 
 });
 
 
-// ------------------- Update User Role (admin only) -------------------
+/// ------------------- Update User Role (admin only) -------------------
 interface IUpdateUserRole {
     email: string;
     role: string;
@@ -420,21 +420,10 @@ export const updateUserRole = CatchAsyncErrors(async (req: Request, res: Respons
     try {
         const { email, role }: IUpdateUserRole = req.body;
 
-        const isUserExist = await User.findOne({ email });
+        const user = await updateUserRoleService(email, role);
 
-        if (!isUserExist) {
+        if (!user) {
             return next(new ErrorHandler('User not found', 400));
-        }
-
-        const user = await User.findByIdAndUpdate(
-            isUserExist._id,
-            { role },
-            { new: true }
-        );
-
-        // refresh Redis session so the role change takes effect immediately
-        if (user) {
-            await redis.set(`session:${user._id}`, JSON.stringify(user));
         }
 
         res.status(201).json({
