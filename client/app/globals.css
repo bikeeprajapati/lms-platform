@@ -18,10 +18,68 @@
 
 body {
   color: rgb(var(--foreground-rgb));
+}
+
+/* ---------------- Hero Animation ---------------- */
+
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.hero-gradient {
   background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+    -45deg,
+    #6366f1,
+    #8b5cf6,
+    #ec4899,
+    #6366f1
+  );
+  background-size: 400% 400%;
+  animation: gradientMove 12s ease infinite;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-fade-in {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.hero-fade-in-delay-1 {
+  animation: fadeInUp 0.8s ease-out 0.15s forwards;
+  opacity: 0;
+}
+
+.hero-fade-in-delay-2 {
+  animation: fadeInUp 0.8s ease-out 0.3s forwards;
+  opacity: 0;
+}
+
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+.hero-float {
+  animation: floatSlow 6s ease-in-out infinite;
 }
