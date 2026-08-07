@@ -6,6 +6,8 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+  --background: #f8fafc;
+  --foreground: rgb(var(--foreground-rgb));
 }
 
 @media (prefers-color-scheme: dark) {
@@ -13,11 +15,25 @@
     --foreground-rgb: 255, 255, 255;
     --background-start-rgb: 0, 0, 0;
     --background-end-rgb: 0, 0, 0;
+    --background: #020617;
+    --foreground: rgb(var(--foreground-rgb));
   }
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  color: rgb(var(--foreground-rgb));
+  color: var(--foreground);
+  background-color: var(--background);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* When next-themes toggles the `dark` class on <html>, update CSS variables */
+.dark {
+  --background: #020617;
+  --foreground: #f8fafc;
 }
 
 /* ---------------- Hero Animation ---------------- */

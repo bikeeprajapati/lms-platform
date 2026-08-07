@@ -39,7 +39,7 @@ const NavItems: React.FC<Props> = ({ isMobile, activeItem }) => {
                     className={`font-poppins text-sm font-medium transition ${
                         activeItem === index
                             ? 'text-cyan-400'
-                            : 'text-white hover:text-cyan-400'
+                            : 'text-slate-700 hover:text-cyan-400 dark:text-slate-200 dark:hover:text-cyan-400'
                     }`}
                 >
                     {item.name}
