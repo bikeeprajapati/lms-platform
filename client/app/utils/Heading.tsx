@@ -1,19 +1,36 @@
-import React ,{FC} from 'react';
+'use client';
 
-interface HeadingProps {
+import React, { FC, useEffect } from 'react';
+
+type Props = {
     title: string;
     description: string;
-    keywords: string;
-}
+    keywords?: string;
+};
 
-const Heading: FC<HeadingProps> = ({ title, description, keywords }) => {
-    return (
-        <head>
-            <title>{title}</title>
-            <meta name="description" content={description} />
-            <meta name="keywords" content={keywords} />
-        </head>
-    );
+const Heading: FC<Props> = ({ title, description, keywords }) => {
+    useEffect(() => {
+        document.title = title;
+
+        const setMeta = (name: string, content: string) => {
+            let tag = document.querySelector(`meta[name="${name}"]`);
+            if (tag) {
+                tag.setAttribute('content', content);
+            } else {
+                tag = document.createElement('meta');
+                tag.setAttribute('name', name);
+                tag.setAttribute('content', content);
+                document.head.appendChild(tag);
+            }
+        };
+
+        setMeta('description', description);
+        if (keywords) {
+            setMeta('keywords', keywords);
+        }
+    }, [title, description, keywords]);
+
+    return null;
 };
 
 export default Heading;

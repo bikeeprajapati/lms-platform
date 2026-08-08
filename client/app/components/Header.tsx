@@ -5,6 +5,10 @@ import React, { FC, useEffect, useState } from 'react';
 import { HiOutlineMenuAlt3, HiOutlineUserCircle } from 'react-icons/hi';
 import NavItems from '../utils/NavItems';
 import ThemeSwitcher from '../utils/ThemeSwitcher';
+import CustomModal from '../utils/CustomModal';
+import Login from './Auth/Login';
+import SignUp from './Auth/SignUp';
+import Verification from './Auth/Verification';
 
 type Props = {
     open: boolean;
@@ -16,6 +20,7 @@ type Props = {
 const Header: FC<Props> = ({ open, setOpen, activeItem, isMobile = false }) => {
     const [active, setActive] = useState(false);
     const [openSidebar, setOpenSidebar] = useState(false);
+    const [route, setRoute] = useState('Login');
 
     useEffect(() => {
         const handleScroll = () => {
@@ -46,7 +51,6 @@ const Header: FC<Props> = ({ open, setOpen, activeItem, isMobile = false }) => {
                     </Link>
 
                     <div className="flex items-center gap-3 sm:gap-6">
-                        {/* NavItems handles its own responsive visibility via CSS */}
                         <NavItems isMobile={false} activeItem={activeItem} />
 
                         <ThemeSwitcher />
@@ -54,13 +58,15 @@ const Header: FC<Props> = ({ open, setOpen, activeItem, isMobile = false }) => {
                         <button
                             type="button"
                             className="flex items-center justify-center rounded-full p-2 text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-                            onClick={() => setOpen(true)}
+                            onClick={() => {
+                                setRoute('Login');
+                                setOpen(true);
+                            }}
                             aria-label="Open profile"
                         >
                             <HiOutlineUserCircle size={24} />
                         </button>
 
-                        {/* Hamburger: visible on small screens only */}
                         <button
                             type="button"
                             onClick={() => setOpenSidebar(true)}
@@ -99,7 +105,11 @@ const Header: FC<Props> = ({ open, setOpen, activeItem, isMobile = false }) => {
                         <div className="mt-6 border-t border-slate-200 pt-4 dark:border-slate-800">
                             <button
                                 type="button"
-                                onClick={() => setOpen(true)}
+                                onClick={() => {
+                                    setRoute('Login');
+                                    setOpen(true);
+                                    setOpenSidebar(false);
+                                }}
                                 className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"
                             >
                                 <HiOutlineUserCircle size={20} />
@@ -112,6 +122,16 @@ const Header: FC<Props> = ({ open, setOpen, activeItem, isMobile = false }) => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {route === 'Login' && open && (
+                <CustomModal open={open} setOpen={setOpen} setRoute={setRoute} component={Login} />
+            )}
+            {route === 'Sign-Up' && open && (
+                <CustomModal open={open} setOpen={setOpen} setRoute={setRoute} component={SignUp} />
+            )}
+            {route === 'Verification' && open && (
+                <CustomModal open={open} setOpen={setOpen} setRoute={setRoute} component={Verification} />
             )}
         </div>
     );
